@@ -16,6 +16,7 @@ import {
   BookMarked, 
   CheckCircle2, 
   XCircle, 
+  ArrowLeft,
   ArrowRight, 
   RotateCcw, 
   Zap, 
@@ -114,14 +115,32 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
     }
   }, [isAnswered, currentQ, sessionAnswers, soundEnabled, onSaveMistake]);
 
-  const handleNext = useCallback(() => {
+  const goToQuestion = useCallback((targetIndex: number) => {
+    if (targetIndex < 0 || targetIndex >= questions.length) return;
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(i => i + 1);
+    const targetQ = questions[targetIndex];
+    const existingAnswer = sessionAnswers[targetQ?.id];
+    setCurrentIndex(targetIndex);
+    if (existingAnswer) {
+      setSelectedOption(existingAnswer);
+      setIsAnswered(true);
+    } else {
       setSelectedOption(null);
       setIsAnswered(false);
+    }
+  }, [questions, sessionAnswers]);
+
+  const handlePrev = useCallback(() => {
+    if (currentIndex > 0) {
+      goToQuestion(currentIndex - 1);
+    }
+  }, [currentIndex, goToQuestion]);
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < questions.length - 1) {
+      goToQuestion(currentIndex + 1);
     } else {
       // Completed the whole session -> Evaluate results
       const result = evaluateQuizSession(questions, sessionAnswers);
@@ -138,7 +157,7 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } });
       }
     }
-  }, [currentIndex, questions, sessionAnswers, soundEnabled]);
+  }, [currentIndex, questions, sessionAnswers, soundEnabled, goToQuestion]);
 
   const handleRestartCurrentSession = () => {
     setCurrentIndex(0);
@@ -175,7 +194,10 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
       if (!isSessionFinished) {
         if (!isAnswered && (key === 'A' || key === 'B' || key === 'C' || key === 'D')) {
           handleSelectOption(key as 'A' | 'B' | 'C' | 'D');
-        } else if (isAnswered && (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight')) {
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          handlePrev();
+        } else if (e.key === 'ArrowRight' || (isAnswered && (e.key === ' ' || e.key === 'Enter'))) {
           e.preventDefault();
           handleNext();
         }
@@ -184,7 +206,7 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAnswered, isSessionFinished, handleSelectOption, handleNext]);
+  }, [isAnswered, isSessionFinished, handleSelectOption, handlePrev, handleNext]);
 
   // Render sentence with neon highlight for signal words
   const renderSentenceWithClue = () => {
@@ -520,6 +542,36 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
                     style={{ width: `${((currentIndex + (isAnswered ? 1 : 0)) / questions.length) * 100}%` }}
                   />
                 </div>
+
+                {/* Interactive Question Stepper / Palette */}
+                <div className="mt-3 flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-thin">
+                  {questions.map((q, idx) => {
+                    const isCurrent = idx === currentIndex;
+                    const isAns = !!sessionAnswers[q.id];
+                    const isCorrect = isAns && sessionAnswers[q.id] === q.correctAnswer;
+                    
+                    let btnStyle = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700';
+                    if (isCurrent) {
+                      btnStyle = 'bg-indigo-600 text-white font-black ring-2 ring-indigo-500/40 border-indigo-600 shadow-xs';
+                    } else if (isAns) {
+                      btnStyle = isCorrect
+                        ? 'bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 font-bold'
+                        : 'bg-rose-100/90 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800 font-bold';
+                    }
+
+                    return (
+                      <button
+                        key={q.id || idx}
+                        type="button"
+                        onClick={() => goToQuestion(idx)}
+                        className={`flex h-7 min-w-7 px-1.5 items-center justify-center rounded-lg text-xs border transition cursor-pointer shrink-0 ${btnStyle}`}
+                        title={`Chuyển đến Câu ${idx + 1}${isAns ? (isCorrect ? ' (Đúng)' : ' (Sai)') : ' (Chưa trả lời)'}`}
+                      >
+                        {idx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Sentence */}
@@ -576,9 +628,13 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
               </div>
 
               {/* Shortcut hint */}
-              {!isAnswered && (
+              {!isAnswered ? (
                 <p className="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">
-                  💡 Mẹo: Bấm phím <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">A</kbd> <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">B</kbd> <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">C</kbd> <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">D</kbd> để chọn nhanh!
+                  💡 Phím tắt: <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">A</kbd> <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">B</kbd> <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">C</kbd> <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">D</kbd> để chọn | <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">←</kbd> câu trước | <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">→</kbd> câu sau
+                </p>
+              ) : (
+                <p className="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">
+                  💡 Phím tắt: <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">Space</kbd> / <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">→</kbd> câu tiếp | <kbd className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">←</kbd> câu trước
                 </p>
               )}
 
@@ -591,26 +647,55 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
                 />
               )}
 
-              {/* Footer Controls */}
-              {isAnswered && (
-                <div className="mt-6 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-5">
+              {/* Footer Controls: Back / Restart / Next */}
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800 pt-5">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
                   <button
+                    type="button"
+                    disabled={currentIndex === 0}
+                    onClick={handlePrev}
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
+                    title="Quay lại câu hỏi trước (Phím mũi tên trái ←)"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Câu trước</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleRestartCurrentSession}
-                    className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition"
+                    className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition px-2 py-1 cursor-pointer"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
                     <span>Làm lại từ đầu</span>
                   </button>
-
-                  <button
-                    onClick={handleNext}
-                    className="flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-slate-800 dark:hover:bg-indigo-700 transition"
-                  >
-                    <span>{currentIndex < questions.length - 1 ? 'Câu kế tiếp' : 'Xem kết quả & Chấm điểm'}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
                 </div>
-              )}
+
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                  {currentIndex < questions.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-slate-800 dark:hover:bg-indigo-700 transition w-full sm:w-auto justify-center cursor-pointer"
+                      title="Chuyển sang câu tiếp theo (Phím mũi tên phải →)"
+                    >
+                      <span>{isAnswered ? 'Câu kế tiếp' : 'Bỏ qua & Sang câu sau'}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!isAnswered && Object.keys(sessionAnswers).length === 0}
+                      onClick={handleNext}
+                      className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-emerald-700 transition w-full sm:w-auto justify-center disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      title="Nộp bài và xem bảng điểm chi tiết"
+                    >
+                      <span>Xem kết quả & Chấm điểm</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             /* EVALUATION & SCORE SUMMARY CARD */
