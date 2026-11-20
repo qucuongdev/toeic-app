@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { safeGetItem, safeSetItem } from '@/utils/safeStorage';
 
 interface HistoryState {
   answeredIds: string[];
@@ -10,29 +11,12 @@ interface HistoryState {
 
 const STORAGE_KEY = 'engmaster_answered_history';
 
-function loadPersistedHistory(): string[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function savePersistedHistory(ids: string[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-  } catch {
-    // Storage might be full or private browsing
-  }
+function isStringArray(val: unknown): val is string[] {
+  return Array.isArray(val) && val.every((item) => typeof item === 'string');
 }
 
 export const useHistoryStore = create<HistoryState>((set, get) => ({
-  answeredIds: loadPersistedHistory(),
+  answeredIds: safeGetItem<string[]>(STORAGE_KEY, [], isStringArray),
 
   addAnsweredIds: (newIds: string[]) => {
     if (!newIds || newIds.length === 0) return;
@@ -49,7 +33,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
     if (added.length > 0) {
       const updated = [...current, ...added];
-      savePersistedHistory(updated);
+      safeSetItem(STORAGE_KEY, updated);
       set({ answeredIds: updated });
     }
   },
@@ -59,7 +43,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   clearHistory: () => {
-    savePersistedHistory([]);
+    safeSetItem(STORAGE_KEY, []);
     set({ answeredIds: [] });
   },
 

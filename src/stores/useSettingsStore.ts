@@ -24,6 +24,44 @@ const API_KEY_STORAGE = 'engmaster_gemini_api_key';
 const MODEL_STORAGE = 'engmaster_gemini_model';
 const THEME_STORAGE = 'engmaster_theme';
 
+function getStorageItem(key: string): string | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+    if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+      return localStorage.getItem(key);
+    }
+  } catch {
+    // Storage access blocked or unavailable
+  }
+  return null;
+}
+
+function setStorageItem(key: string, value: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, value);
+    } else if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+      localStorage.setItem(key, value);
+    }
+  } catch {
+    // Storage access blocked or quota exceeded
+  }
+}
+
+function removeStorageItem(key: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(key);
+    } else if (typeof localStorage !== 'undefined' && typeof localStorage.removeItem === 'function') {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // Storage access blocked or unavailable
+  }
+}
+
 function applyThemeClass(theme: ThemeMode): void {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
@@ -37,7 +75,7 @@ function applyThemeClass(theme: ThemeMode): void {
 function getInitialTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'light';
   try {
-    const saved = localStorage.getItem(THEME_STORAGE) as ThemeMode | null;
+    const saved = getStorageItem(THEME_STORAGE) as ThemeMode | null;
     if (saved === 'dark' || saved === 'light') {
       applyThemeClass(saved);
       return saved;
@@ -54,8 +92,8 @@ function getInitialTheme(): ThemeMode {
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
-  geminiApiKey: typeof window !== 'undefined' ? localStorage.getItem(API_KEY_STORAGE) || '' : '',
-  geminiModel: (typeof window !== 'undefined' ? (localStorage.getItem(MODEL_STORAGE) as GeminiModelId) || 'gemini-2.5-flash' : 'gemini-2.5-flash'),
+  geminiApiKey: getStorageItem(API_KEY_STORAGE) || '',
+  geminiModel: ((getStorageItem(MODEL_STORAGE) as GeminiModelId) || 'gemini-2.5-flash'),
   soundEnabled: true,
   autoSpeak: true,
   isSettingsOpen: false,
@@ -63,23 +101,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setGeminiApiKey: (key: string) => {
     const trimmed = key.trim();
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(API_KEY_STORAGE, trimmed);
-    }
+    setStorageItem(API_KEY_STORAGE, trimmed);
     set({ geminiApiKey: trimmed });
   },
 
   clearGeminiApiKey: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(API_KEY_STORAGE);
-    }
+    removeStorageItem(API_KEY_STORAGE);
     set({ geminiApiKey: '' });
   },
 
   setGeminiModel: (model: GeminiModelId) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(MODEL_STORAGE, model);
-    }
+    setStorageItem(MODEL_STORAGE, model);
     set({ geminiModel: model });
   },
 
@@ -88,13 +120,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setSettingsOpen: (open: boolean) => set({ isSettingsOpen: open }),
 
   setTheme: (theme: ThemeMode) => {
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(THEME_STORAGE, theme);
-      } catch {
-        // storage fallback
-      }
-    }
+    setStorageItem(THEME_STORAGE, theme);
     applyThemeClass(theme);
     set({ theme });
   },

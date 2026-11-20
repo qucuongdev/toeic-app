@@ -4,7 +4,7 @@ import { Question, Flashcard } from '@/types';
 
 describe('Safe Storage Utility (Defensive Anti-Crash)', () => {
   beforeEach(() => {
-    localStorage.clear();
+    window.localStorage?.clear();
   });
 
   it('returns fallback when key does not exist in localStorage', () => {
@@ -13,14 +13,14 @@ describe('Safe Storage Utility (Defensive Anti-Crash)', () => {
   });
 
   it('safely handles corrupted or invalid JSON without throwing errors', () => {
-    localStorage.setItem('corrupted_key', '{ bad json: true, ...');
+    window.localStorage?.setItem('corrupted_key', '{ bad json: true, ...');
     const result = safeGetItem('corrupted_key', { fallback: true });
     expect(result).toEqual({ fallback: true });
   });
 
   it('safely validates parsed data using custom validator', () => {
     // Stored data is valid JSON, but wrong type (object instead of array)
-    localStorage.setItem('invalid_type_key', JSON.stringify({ notAnArray: true }));
+    window.localStorage?.setItem('invalid_type_key', JSON.stringify({ notAnArray: true }));
     const result = safeGetItem('invalid_type_key', ['fallback_val'], (val): val is string[] => Array.isArray(val));
     expect(result).toEqual(['fallback_val']);
   });

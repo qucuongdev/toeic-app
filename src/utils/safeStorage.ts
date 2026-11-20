@@ -1,5 +1,19 @@
 import { Question, Flashcard } from '@/types';
 
+function getStorage(): Storage | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+    if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+      return localStorage;
+    }
+  } catch {
+    // blocked or unavailable
+  }
+  return null;
+}
+
 /**
  * Safely retrieves and parses an item from localStorage with error boundary and schema validation.
  */
@@ -8,12 +22,13 @@ export function safeGetItem<T>(
   fallback: T,
   validator?: (val: unknown) => val is T
 ): T {
-  if (typeof window === 'undefined') {
-    return fallback;
-  }
-
   try {
-    const raw = localStorage.getItem(key);
+    const storage = getStorage();
+    if (!storage) {
+      return fallback;
+    }
+
+    const raw = storage.getItem(key);
     if (raw === null || raw === undefined) {
       return fallback;
     }
@@ -35,13 +50,14 @@ export function safeGetItem<T>(
  * Safely saves an item to localStorage handling QuotaExceededError or SecurityError.
  */
 export function safeSetItem(key: string, value: unknown): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
   try {
+    const storage = getStorage();
+    if (!storage) {
+      return false;
+    }
+
     const serialized = JSON.stringify(value);
-    localStorage.setItem(key, serialized);
+    storage.setItem(key, serialized);
     return true;
   } catch {
     return false;
@@ -52,12 +68,13 @@ export function safeSetItem(key: string, value: unknown): boolean {
  * Safely removes an item from localStorage.
  */
 export function safeRemoveItem(key: string): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
   try {
-    localStorage.removeItem(key);
+    const storage = getStorage();
+    if (!storage) {
+      return false;
+    }
+
+    storage.removeItem(key);
     return true;
   } catch {
     return false;

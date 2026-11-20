@@ -3,7 +3,7 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 
 describe('useSettingsStore - Dark Mode & Light Mode Theme Support', () => {
   beforeEach(() => {
-    localStorage.clear();
+    window.localStorage?.clear();
     document.documentElement.classList.remove('dark');
     useSettingsStore.getState().setTheme('light');
   });
@@ -18,7 +18,7 @@ describe('useSettingsStore - Dark Mode & Light Mode Theme Support', () => {
 
     expect(useSettingsStore.getState().theme).toBe('dark');
     expect(document.documentElement.classList.contains('dark')).toBe(true);
-    expect(localStorage.getItem('engmaster_theme')).toBe('dark');
+    expect(window.localStorage?.getItem('engmaster_theme')).toBe('dark');
   });
 
   it('toggles between light and dark mode smoothly', () => {
