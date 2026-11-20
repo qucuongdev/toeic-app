@@ -100,7 +100,7 @@ export const ExplanationCard: React.FC<ExplanationCardProps> = ({
         )}
 
         {/* 5. 5-Second Fast Tip */}
-        <div className="rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 p-4 border border-indigo-200/80 dark:border-indigo-850/50">
+        <div className="rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 p-4 border border-indigo-200/80 dark:border-indigo-800/50">
           <div className="flex items-center gap-2 font-bold text-indigo-900 dark:text-indigo-300 text-xs uppercase tracking-wider mb-1.5">
             <Lightbulb className="h-4 w-4 text-amber-500" />
             <span>5. Mẹo ghi nhớ siêu tốc 5 giây:</span>

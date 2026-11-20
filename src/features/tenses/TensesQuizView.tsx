@@ -403,7 +403,7 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
             </div>
 
             {/* Individual 12 Tenses Selector Bar */}
-            <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-3">
+            <div className="rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-3">
               <div className="flex items-center justify-between mb-2 px-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                   <ListFilter className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
@@ -421,16 +421,16 @@ export const TensesQuizView: React.FC<TensesQuizViewProps> = ({ onSaveMistake })
                     <button
                       key={tense.id}
                       onClick={() => setSelectedFilter(tense.id)}
-                      className={`flex flex-col items-start rounded-xl p-2.5 text-left text-xs transition border ${
+                      className={`flex flex-col items-start rounded-xl p-2.5 text-left text-xs transition border cursor-pointer ${
                         isSelected
-                          ? 'border-indigo-600 bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-950 dark:text-indigo-200 font-bold shadow-xs ring-1 ring-indigo-500/20'
-                          : 'border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-850 hover:bg-slate-100/70 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          ? 'border-indigo-600 dark:border-indigo-500 bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-950 dark:text-indigo-200 font-bold shadow-xs ring-1 ring-indigo-500/30'
+                          : 'border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-700/70 text-slate-700 dark:text-slate-200'
                       }`}
                     >
-                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-400 uppercase">
                         {tense.nameEn}
                       </span>
-                      <span className="font-bold text-slate-900 dark:text-white leading-tight">
+                      <span className="font-bold text-slate-900 dark:text-slate-100 leading-tight">
                         {tense.nameVi}
                       </span>
                     </button>

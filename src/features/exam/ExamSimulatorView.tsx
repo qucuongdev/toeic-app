@@ -268,7 +268,7 @@ export const ExamSimulatorView: React.FC<ExamSimulatorViewProps> = ({ onSaveMist
 
       {/* Score Modal Banner if submitted */}
       {isSubmitted && scoreResult && (
-        <div className="mb-8 rounded-3xl border border-emerald-200 dark:border-emerald-850/60 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-blue-950/30 p-6 sm:p-8 shadow-lg">
+        <div className="mb-8 rounded-3xl border border-emerald-200 dark:border-emerald-800/60 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-blue-950/30 p-6 sm:p-8 shadow-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="flex items-start sm:items-center gap-4">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
